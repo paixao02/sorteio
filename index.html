@@ -2,12 +2,12 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Sorteio</title>
+<title>Sorteio Online</title>
 </head>
 
 <body style="background:#111;color:#fff;text-align:center;font-family:Arial;">
 
-<h1>Sistema de Sorteio (R$10 = 1 cupom)</h1>
+<h1>Sorteio Online (R$10 = 1 cupom)</h1>
 
 <input id="nome" placeholder="Nome">
 <input id="valor" type="number" placeholder="Valor">
@@ -20,82 +20,92 @@
 
 <br>
 <button onclick="sortear()">Sortear</button>
-<button onclick="limpar()">🗑️ Limpar Tudo</button>
 
 <h2 id="res"></h2>
 
-<script>
+<script type="module">
 
-let lista = JSON.parse(localStorage.getItem("clientes")) || [];
-let numero = parseInt(localStorage.getItem("numero")) || 1;
+// 🔥 IMPORTA FIREBASE (VERSÃO NOVA)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-render();
+// 🔑 COLE SUA CONFIG AQUI (DO FIREBASE)
+const firebaseConfig = {
+    apiKey: "AIzaSyAlEE8Oijc0u-mTvChecy3521nOVjS9okA",
+    authDomain: "sorteio-baadb.firebaseapp.com",
+    projectId: "sorteio-baadb",
+    storageBucket: "sorteio-baadb.firebasestorage.app",
+    messagingSenderId: "734656192384",
+    appId: "1:734656192384:web:c6e0cc99bf58361fd06b65",
+};
 
-function salvar(){
-  localStorage.setItem("clientes", JSON.stringify(lista));
-  localStorage.setItem("numero", numero);
-}
+// INICIA FIREBASE
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-function add(){
-  let nome = document.getElementById("nome").value.trim();
+let numero = 1;
+
+// 🔄 ATUALIZA EM TEMPO REAL
+onSnapshot(collection(db, "clientes"), (snapshot) => {
+  let html = "";
+  numero = 1;
+
+  snapshot.forEach(doc => {
+    let c = doc.data();
+    html += `<tr>
+      <td>${c.nome}</td>
+      <td>${c.cupons}</td>
+      <td>${c.inicio}-${c.fim}</td>
+    </tr>`;
+    numero = c.fim + 1;
+  });
+
+  document.getElementById("tabela").innerHTML = html;
+});
+
+// ➕ ADICIONAR
+window.add = async function(){
+  let nome = document.getElementById("nome").value;
   let valor = parseFloat(document.getElementById("valor").value);
 
-  if(nome === "" || isNaN(valor)){
-    alert("Preencha corretamente");
-    return;
-  }
-
-  // 👇 ALTERAÇÃO AQUI
   let cupons = Math.floor(valor / 10);
 
-  if(cupons <= 0){
-    alert("Valor insuficiente para gerar cupom (mínimo R$10)");
+  if(!nome  isNaN(valor)  cupons <= 0){
+    alert("Preencha corretamente (mínimo R$10)");
     return;
   }
 
   let inicio = numero;
   let fim = numero + cupons - 1;
 
-  lista.push({nome: nome, inicio: inicio, fim: fim, cupons: cupons});
-  numero = fim + 1;
-
-  salvar();
-  render();
-}
-
-function render(){
-  let html = "";
-  lista.forEach(function(c){
-    html += "<tr><td>" + c.nome + "</td><td>" + c.cupons + "</td><td>" + c.inicio + "-" + c.fim + "</td></tr>";
+  await addDoc(collection(db, "clientes"), {
+    nome,
+    cupons,
+    inicio,
+    fim
   });
-  document.getElementById("tabela").innerHTML = html;
-}
+};
 
-function sortear(){
-  if(lista.length === 0){
-    alert("Sem participantes");
-    return;
-  }
+// 🎯 SORTEAR
+window.sortear = async function(){
+  let snapshot = await getDocs(collection(db, "clientes"));
 
-  let sorteado = Math.floor(Math.random()*(numero-1))+1;
+  let lista = [];
+  let max = 0;
 
-  let vencedor = lista.find(function(c){
-    return sorteado >= c.inicio && sorteado <= c.fim;
+  snapshot.forEach(doc => {
+    let c = doc.data();
+    lista.push(c);
+    if(c.fim > max) max = c.fim;
   });
+
+  let sorteado = Math.floor(Math.random() * max) + 1;
+
+  let vencedor = lista.find(c => sorteado >= c.inicio && sorteado <= c.fim);
 
   document.getElementById("res").innerHTML =
     "Número: " + sorteado + "<br>Vencedor: " + vencedor.nome;
-}
-
-function limpar(){
-  if(confirm("Tem certeza que quer apagar tudo?")){
-    localStorage.clear();
-    lista = [];
-    numero = 1;
-    render();
-    document.getElementById("res").innerHTML = "";
-  }
-}
+};
 
 </script>
 
