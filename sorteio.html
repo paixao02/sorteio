@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Sorteio Online</title>
+</head>
+
+<body style="background:#111;color:#fff;text-align:center;font-family:Arial;">
+
+<h1>🎯 Sorteio (R$10 = 1 cupom)</h1>
+
+<input id="nome" placeholder="Nome">
+<input id="valor" type="number" placeholder="Valor">
+<button onclick="addCliente()">Adicionar</button>
+
+<table border="1" style="margin:auto;margin-top:20px;">
+<tr><th>Nome</th><th>Cupons</th><th>Números</th></tr>
+<tbody id="tabela"></tbody>
+</table>
+
+<br>
+<button onclick="sortear()">Sortear</button>
+
+<h2 id="res"></h2>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAlEE8Oijc0u-mTvChecy3521nOVjS9okA",
+  authDomain: "sorteio-baadb.firebaseapp.com",
+  projectId: "sorteio-baadb",
+  storageBucket: "sorteio-baadb.firebasestorage.app",
+  messagingSenderId: "734656192384",
+  appId: "1:734656192384:web:c6e0cc99bf58361fd06b65"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let numero = 1;
+
+onSnapshot(collection(db, "clientes"), (snapshot) => {
+  let html = "";
+  numero = 1;
+
+  snapshot.forEach(doc => {
+    let c = doc.data();
+    html += "<tr><td>" + c.nome + "</td><td>" + c.cupons + "</td><td>" + c.inicio + "-" + c.fim + "</td></tr>";
+    numero = c.fim + 1;
+  });
+
+  document.getElementById("tabela").innerHTML = html;
+});
+
+window.addCliente = async function(){
+  let nome = document.getElementById("nome").value.trim();
+  let valor = parseFloat(document.getElementById("valor").value);
+
+  let cupons = Math.floor(valor / 10);
+
+  if(nome === ""  isNaN(valor)  cupons <= 0){
+    alert("Preencha corretamente (mínimo R$10)");
+    return;
+  }
+
+  let inicio = numero;
+  let fim = numero + cupons - 1;
+
+  await addDoc(collection(db, "clientes"), {
+    nome: nome,
+    cupons: cupons,
+    inicio: inicio,
+    fim: fim
+  });
+};
+
+window.sortear = async function(){
+  let snapshot = await getDocs(collection(db, "clientes"));
+
+  let lista = [];
+  let max = 0;
+
+  snapshot.forEach(doc => {
+    let c = doc.data();
+    lista.push(c);
+    if(c.fim > max) max = c.fim;
+  });
+
+  if(max === 0){
+    alert("Sem participantes");
+    return;
+  }
+
+  let sorteado = Math.floor(Math.random() * max) + 1;
+
+  let vencedor = lista.find(c => sorteado >= c.inicio && sorteado <= c.fim);
+
+  document.getElementById("res").innerHTML =
+    "Número: " + sorteado + "<br>Vencedor: " + vencedor.nome;
+};
+
+</script>
+
+</body>
+</html>
