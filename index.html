@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Sorteio Online</title>
+<title>Sorteio</title>
 </head>
 
 <body style="background:#111;color:#fff;text-align:center;font-family:Arial;">
@@ -70,10 +70,10 @@ window.addCliente = async function(){
   let fim = numero + cupons - 1;
 
   await addDoc(collection(db, "clientes"), {
-    nome: nome,
-    cupons: cupons,
-    inicio: inicio,
-    fim: fim
+    nome,
+    cupons,
+    inicio,
+    fim
   });
 };
 
