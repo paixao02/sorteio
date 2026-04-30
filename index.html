@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Sorteio</title>
+</head>
+
+<body style="background:#111;color:#fff;text-align:center;font-family:Arial;">
+
+<h1>Sistema de Sorteio (R$10 = 1 cupom)</h1>
+
+<input id="nome" placeholder="Nome">
+<input id="valor" type="number" placeholder="Valor">
+<button onclick="add()">Adicionar</button>
+
+<table border="1" style="margin:auto;margin-top:20px;">
+<tr><th>Nome</th><th>Cupons</th><th>Números</th></tr>
+<tbody id="tabela"></tbody>
+</table>
+
+<br>
+<button onclick="sortear()">Sortear</button>
+<button onclick="limpar()">🗑️ Limpar Tudo</button>
+
+<h2 id="res"></h2>
+
+<script>
+
+let lista = JSON.parse(localStorage.getItem("clientes")) || [];
+let numero = parseInt(localStorage.getItem("numero")) || 1;
+
+render();
+
+function salvar(){
+  localStorage.setItem("clientes", JSON.stringify(lista));
+  localStorage.setItem("numero", numero);
+}
+
+function add(){
+  let nome = document.getElementById("nome").value.trim();
+  let valor = parseFloat(document.getElementById("valor").value);
+
+  if(nome === "" || isNaN(valor)){
+    alert("Preencha corretamente");
+    return;
+  }
+
+  // 👇 ALTERAÇÃO AQUI
+  let cupons = Math.floor(valor / 10);
+
+  if(cupons <= 0){
+    alert("Valor insuficiente para gerar cupom (mínimo R$10)");
+    return;
+  }
+
+  let inicio = numero;
+  let fim = numero + cupons - 1;
+
+  lista.push({nome: nome, inicio: inicio, fim: fim, cupons: cupons});
+  numero = fim + 1;
+
+  salvar();
+  render();
+}
+
+function render(){
+  let html = "";
+  lista.forEach(function(c){
+    html += "<tr><td>" + c.nome + "</td><td>" + c.cupons + "</td><td>" + c.inicio + "-" + c.fim + "</td></tr>";
+  });
+  document.getElementById("tabela").innerHTML = html;
+}
+
+function sortear(){
+  if(lista.length === 0){
+    alert("Sem participantes");
+    return;
+  }
+
+  let sorteado = Math.floor(Math.random()*(numero-1))+1;
+
+  let vencedor = lista.find(function(c){
+    return sorteado >= c.inicio && sorteado <= c.fim;
+  });
+
+  document.getElementById("res").innerHTML =
+    "Número: " + sorteado + "<br>Vencedor: " + vencedor.nome;
+}
+
+function limpar(){
+  if(confirm("Tem certeza que quer apagar tudo?")){
+    localStorage.clear();
+    lista = [];
+    numero = 1;
+    render();
+    document.getElementById("res").innerHTML = "";
+  }
+}
+
+</script>
+
+</body>
+</html>
