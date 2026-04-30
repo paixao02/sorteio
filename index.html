@@ -25,27 +25,25 @@
 
 <script type="module">
 
-// 🔥 IMPORTA FIREBASE (VERSÃO NOVA)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔑 COLE SUA CONFIG AQUI (DO FIREBASE)
+// 🔥 SUA CONFIG (já pronta)
 const firebaseConfig = {
-    apiKey: "AIzaSyAlEE8Oijc0u-mTvChecy3521nOVjS9okA",
-    authDomain: "sorteio-baadb.firebaseapp.com",
-    projectId: "sorteio-baadb",
-    storageBucket: "sorteio-baadb.firebasestorage.app",
-    messagingSenderId: "734656192384",
-    appId: "1:734656192384:web:c6e0cc99bf58361fd06b65",
+  apiKey: "AIzaSyAlEE8Oijc0u-mTvChecy3521nOVjS9okA",
+  authDomain: "sorteio-baadb.firebaseapp.com",
+  projectId: "sorteio-baadb",
+  storageBucket: "sorteio-baadb.firebasestorage.app",
+  messagingSenderId: "734656192384",
+  appId: "1:734656192384:web:c6e0cc99bf58361fd06b65"
 };
 
-// INICIA FIREBASE
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let numero = 1;
 
-// 🔄 ATUALIZA EM TEMPO REAL
+// 🔄 ATUALIZA AUTOMÁTICO
 onSnapshot(collection(db, "clientes"), (snapshot) => {
   let html = "";
   numero = 1;
