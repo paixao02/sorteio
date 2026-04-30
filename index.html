@@ -11,7 +11,7 @@
 
 <input id="nome" placeholder="Nome">
 <input id="valor" type="number" placeholder="Valor">
-<button onclick="add()">Adicionar</button>
+<button onclick="addCliente()">Adicionar</button>
 
 <table border="1" style="margin:auto;margin-top:20px;">
 <tr><th>Nome</th><th>Cupons</th><th>Números</th></tr>
@@ -28,7 +28,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔥 SUA CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyAlEE8Oijc0u-mTvChecy3521nOVjS9okA",
   authDomain: "sorteio-baadb.firebaseapp.com",
@@ -38,13 +37,12 @@ const firebaseConfig = {
   appId: "1:734656192384:web:c6e0cc99bf58361fd06b65"
 };
 
-// INICIAR FIREBASE
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let numero = 1;
 
-// 🔄 ATUALIZA EM TEMPO REAL
+// 🔄 Atualização automática
 onSnapshot(collection(db, "clientes"), (snapshot) => {
   let html = "";
   numero = 1;
@@ -52,13 +50,7 @@ onSnapshot(collection(db, "clientes"), (snapshot) => {
   snapshot.forEach(doc => {
     let c = doc.data();
 
-    html += `
-      <tr>
-        <td>${c.nome}</td>
-        <td>${c.cupons}</td>
-        <td>${c.inicio} - ${c.fim}</td>
-      </tr>
-    `;
+    html += "<tr><td>" + c.nome + "</td><td>" + c.cupons + "</td><td>" + c.inicio + " - " + c.fim + "</td></tr>";
 
     numero = c.fim + 1;
   });
@@ -66,15 +58,15 @@ onSnapshot(collection(db, "clientes"), (snapshot) => {
   document.getElementById("tabela").innerHTML = html;
 });
 
-// ➕ ADICIONAR
-window.add = async function(){
+// ➕ ADICIONAR (nome diferente pra evitar bug)
+window.addCliente = async function(){
   try {
     let nome = document.getElementById("nome").value.trim();
     let valor = parseFloat(document.getElementById("valor").value);
 
     let cupons = Math.floor(valor / 10);
 
-    if(!nome  isNaN(valor)  cupons <= 0){
+    if(nome === ""  isNaN(valor)  cupons <= 0){
       alert("⚠️ Preencha corretamente (mínimo R$10)");
       return;
     }
@@ -89,48 +81,38 @@ window.add = async function(){
       fim: fim
     });
 
-    document.getElementById("nome").value = "";
-    document.getElementById("valor").value = "";
-
     alert("✅ Adicionado com sucesso!");
 
   } catch (erro) {
-    alert("❌ Erro: " + erro.message);
+    alert("Erro: " + erro.message);
     console.log(erro);
   }
 };
 
-// 🎯 SORTEAR
+// 🎯 SORTEIO
 window.sortear = async function(){
-  try {
-    let snapshot = await getDocs(collection(db, "clientes"));
+  let snapshot = await getDocs(collection(db, "clientes"));
 
-    let lista = [];
-    let max = 0;
+  let lista = [];
+  let max = 0;
 
-    snapshot.forEach(doc => {
-      let c = doc.data();
-      lista.push(c);
-      if(c.fim > max) max = c.fim;
-    });
+  snapshot.forEach(doc => {
+    let c = doc.data();
+    lista.push(c);
+    if(c.fim > max) max = c.fim;
+  });
 
-    if(max === 0){
-      alert("Sem participantes");
-      return;
-    }
-
-    let sorteado = Math.floor(Math.random() * max) + 1;
-
-    let vencedor = lista.find(c => 
-      sorteado >= c.inicio && sorteado <= c.fim
-    );
-
-    document.getElementById("res").innerHTML =
-      🎉 Número: ${sorteado} <br> 🏆 Vencedor: ${vencedor.nome};
-
-  } catch (erro) {
-    alert("Erro no sorteio: " + erro.message);
+  if(max === 0){
+    alert("Sem participantes");
+    return;
   }
+
+  let sorteado = Math.floor(Math.random() * max) + 1;
+
+  let vencedor = lista.find(c => sorteado >= c.inicio && sorteado <= c.fim);
+
+  document.getElementById("res").innerHTML =
+    "🎉 Número: " + sorteado + "<br>🏆 Vencedor: " + vencedor.nome;
 };
 
 </script>
